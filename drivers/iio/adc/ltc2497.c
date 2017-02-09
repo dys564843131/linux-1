@@ -75,7 +75,7 @@ static int ltc2497_read(struct ltc2497_st *st, u8 address, int *val)
 		return ret;
 	}
 	st->time_prev = ktime_get();
-	*val = sign_extend32(be32_to_cpu(buf) >> 14, 15);
+	*val = sign_extend32(be32_to_cpu(buf) >> 14, 16);
 
 	return ret;
 }
@@ -89,7 +89,9 @@ static int ltc2497_read_raw(struct iio_dev *indio_dev,
 
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
+		mutex_lock(&indio_dev->mlock);
 		ret = ltc2497_read(st, chan->address, val);
+		mutex_unlock(&indio_dev->mlock);
 		if (ret < 0)
 			return ret;
 
@@ -100,7 +102,7 @@ static int ltc2497_read_raw(struct iio_dev *indio_dev,
 		if (ret < 0)
 			return ret;
 
-		*val = ret / 1000;
+		*val = ret / 2000;
 		*val2 = 16;
 
 		return IIO_VAL_FRACTIONAL_LOG2;
